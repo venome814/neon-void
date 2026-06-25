@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEON VOID — Discord Bot</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --void: #050507;
+      --deep: #0D0A14;
+      --cave: #130D22;
+      --purple-dim: #3D1F5C;
+      --purple-mid: #6B1FA8;
+      --purple-core: #8B2FC9;
+      --neon: #C840F0;
+      --neon-soft: #D96AF5;
+      --cyan: #00F5FF;
+      --white: #EEE8F5;
+      --muted: #9B8CB0;
+      --card-bg: rgba(61, 31, 92, 0.18);
+      --card-border: rgba(200, 64, 240, 0.25);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--void);
+      color: var(--white);
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ── CANVAS BG ── */
+    #void-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── SCANLINES ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.08) 2px,
+        rgba(0,0,0,0.08) 4px
+      );
+      pointer-events: none;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.2rem 2.5rem;
+      background: rgba(5, 5, 7, 0.7);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(200, 64, 240, 0.15);
+    }
+
+    .nav-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      color: var(--neon);
+      text-shadow: 0 0 18px rgba(200,64,240,0.9), 0 0 40px rgba(200,64,240,0.4);
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--neon); }
+
+    .nav-cta {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--void);
+      background: var(--neon);
+      border: none;
+      padding: 0.55rem 1.4rem;
+      cursor: pointer;
+      clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+      transition: background 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+    }
+    .nav-cta:hover {
+      background: var(--neon-soft);
+      box-shadow: 0 0 24px rgba(200,64,240,0.7);
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 8rem 2rem 4rem;
+    }
+
+    .hero-eyebrow {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.7rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.2s forwards;
+    }
+
+    .hero-title {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(3.5rem, 10vw, 8rem);
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 0%, var(--neon-soft) 40%, var(--neon) 70%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 30px rgba(200,64,240,0.5));
+      opacity: 0;
+      animation: fadeUp 0.8s 0.4s forwards, glitch 6s 2s infinite;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--muted);
+      max-width: 560px;
+      margin: 1.8rem auto 0;
+      font-weight: 300;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.6s forwards;
+    }
+
+    .hero-sub strong { color: var(--neon-soft); font-weight: 600; }
+
+    .hero-stats {
+      display: flex;
+      gap: 3rem;
+      margin-top: 3rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 0.8s forwards;
+    }
+
+    .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .stat-num {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: 1.8rem;
+      color: var(--neon);
+      text-shadow: 0 0 20px rgba(200,64,240,0.6);
+    }
+
+    .stat-label {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 0.2rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2.8rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeUp 0.8s 1s forwards;
+    }
+
+    .btn-primary {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--void);
+      background: linear-gradient(135deg, var(--neon), var(--purple-core));
+      border: none;
+      padding: 0.9rem 2.2rem;
+      cursor: pointer;
+      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+      transition: box-shadow 0.2s, transform 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary:hover {
+      box-shadow: 0 0 32px rgba(200,64,240,0.8), 0 0 60px rgba(200,64,240,0.3);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--neon);
+      background: transparent;
+      border: 1px solid rgba(200,64,240,0.5);
+      padding: 0.9rem 2.2rem;
+      cursor: pointer;
+      clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-secondary:hover {
+      background: rgba(200,64,240,0.1);
+      border-color: var(--neon);
+      transform: translateY(-2px);
+    }
+
+    .scroll-hint {
+      margin-top: 4rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      animation: fadeUp 0.8s 1.3s forwards;
+    }
+
+    .scroll-hint span {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--purple-mid);
+    }
+
+    .scroll-line {
+      width: 1px;
+      height: 48px;
+      background: linear-gradient(to bottom, var(--neon), transparent);
+      animation: scrollDrop 1.5s ease-in-out infinite;
+    }
+
+    /* ── SECTION SHARED ── */
+    section {
+      position: relative;
+      z-index: 2;
+      padding: 6rem 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 0.8rem;
+    }
+
+    .section-title {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.6rem, 4vw, 2.5rem);
+      color: var(--white);
+      margin-bottom: 1rem;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      color: var(--muted);
+      max-width: 500px;
+      font-weight: 300;
+    }
+
+    /* ── FEATURES GRID ── */
+    .features-header { margin-bottom: 3.5rem; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
+      clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
+      background: linear-gradient(to right, transparent, var(--neon), transparent);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+
+    .feature-card:hover {
+      border-color: rgba(200,64,240,0.55);
+      transform: translateY(-4px);
+      box-shadow: 0 16px 40px rgba(200,64,240,0.15);
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+      color: var(--neon);
+      text-shadow: 0 0 12px rgba(200,64,240,0.7), 0 0 28px rgba(200,64,240,0.3);
+      line-height: 1;
+      font-weight: 400;
+    }
+
+    .feature-card h3 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--neon-soft);
+      margin-bottom: 0.6rem;
+      text-transform: uppercase;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.65;
+    }
+
+    .feature-tag {
+      display: inline-block;
+      margin-top: 1rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      border: 1px solid rgba(0,245,255,0.3);
+      padding: 0.2rem 0.6rem;
+    }
+
+    /* ── COMMAND PREVIEW ── */
+    .cmd-section {
+      background: linear-gradient(180deg, transparent, rgba(139, 47, 201, 0.05), transparent);
+      border-top: 1px solid rgba(200,64,240,0.1);
+      border-bottom: 1px solid rgba(200,64,240,0.1);
+      max-width: 100%;
+      padding: 6rem 2rem;
+    }
+
+    .cmd-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .terminal {
+      background: #0A0612;
+      border: 1px solid rgba(200,64,240,0.3);
+      padding: 1.5rem;
+      font-family: 'Courier New', monospace;
+      font-size: 0.82rem;
+      line-height: 1.8;
+      position: relative;
+      clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
+    }
+
+    .terminal-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+      align-items: center;
+    }
+
+    .t-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .t-dot:nth-child(1) { background: #ff5f56; }
+    .t-dot:nth-child(2) { background: #ffbd2e; }
+    .t-dot:nth-child(3) { background: #27c93f; }
+
+    .t-title {
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      margin-left: 0.5rem;
+    }
+
+    .t-line { display: block; }
+    .t-prompt { color: var(--purple-mid); }
+    .t-cmd { color: var(--neon); }
+    .t-out { color: #9B8CB0; }
+    .t-cat { color: var(--cyan); }
+    .t-hi { color: #fff; }
+    .t-blink {
+      display: inline-block;
+      width: 8px; height: 1em;
+      background: var(--neon);
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+
+    /* ── CATEGORIES STRIP ── */
+    .cat-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2.5rem;
+    }
+
+    .cat-pill {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--neon-soft);
+      border: 1px solid rgba(200,64,240,0.3);
+      padding: 0.35rem 0.9rem;
+      background: rgba(200,64,240,0.07);
+      transition: background 0.2s, border-color 0.2s;
+      cursor: default;
+    }
+    .cat-pill:hover {
+      background: rgba(200,64,240,0.18);
+      border-color: var(--neon);
+    }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      text-align: center;
+      padding: 7rem 2rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .cta-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(200,64,240,0.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-section h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.1;
+      margin-bottom: 1.2rem;
+    }
+
+    .cta-section h2 span {
+      background: linear-gradient(90deg, var(--neon), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cta-section p {
+      color: var(--muted);
+      font-size: 1rem;
+      max-width: 440px;
+      margin: 0 auto 2.5rem;
+      font-weight: 300;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 2;
+      border-top: 1px solid rgba(200,64,240,0.12);
+      padding: 2rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-logo {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: 0.9rem;
+      letter-spacing: 0.15em;
+      color: var(--purple-mid);
+    }
+
+    footer p {
+      font-size: 0.75rem;
+      color: var(--purple-mid);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .footer-links a {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--neon); }
+
+    /* ── DIVIDER ── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(200,64,240,0.3), transparent);
+      margin: 0;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes glitch {
+      0%, 92%, 100% { transform: none; filter: drop-shadow(0 0 30px rgba(200,64,240,0.5)); }
+      93%  { transform: translateX(-3px); filter: drop-shadow(3px 0 0 var(--cyan)) drop-shadow(-3px 0 0 var(--neon)); }
+      94%  { transform: translateX(3px); }
+      95%  { transform: translateX(-2px) skewX(-2deg); }
+      96%  { transform: none; }
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    @keyframes scrollDrop {
+      0% { opacity: 0; transform: translateY(-10px); }
+      50% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(10px); }
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(0.9); opacity: 0.6; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .cmd-inner { grid-template-columns: 1fr; gap: 2.5rem; }
+      nav { padding: 1rem 1.5rem; }
+      .nav-links { display: none; }
+      .hero-stats { gap: 1.5rem; }
+      footer { flex-direction: column; text-align: center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="void-canvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">NEON VOID</a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#commands">Commands</a></li>
+    <li><a href="https://discord.com/oauth2/authorize?client_id=1468997990575378432&permissions=824671333721&scope=bot%20applications.commands" target="_blank" rel="noopener">Invite</a></li>
+  </ul>
+  <a class="nav-cta" href="https://discord.com/oauth2/authorize?client_id=1468997990575378432&permissions=824671333721&scope=bot%20applications.commands" target="_blank" rel="noopener">Add to Discord</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <p class="hero-eyebrow">Discord Bot · Powered by the Void</p>
+  <h1 class="hero-title">NEON VOID</h1>
+  <p class="hero-sub">
+    One bot. Every tool your server needs —
+    <strong>AI chat, music, moderation, giveaways,</strong> and 170+ commands wrapped in neon.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num">170+</span>
+      <span class="stat-label">Commands</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">19+</span>
+      <span class="stat-label">Categories</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">24/7</span>
+      <span class="stat-label">Uptime</span>
+    </div>
+  </div>
+
+  <div class="hero-actions">
+    <a class="btn-primary" href="https://discord.com/oauth2/authorize?client_id=1468997990575378432&permissions=824671333721&scope=bot%20applications.commands" target="_blank" rel="noopener">Invite Free →</a>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Explore</span>
+    <div class="scroll-line"></div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-header">
+    <p class="section-label">What it does</p>
+    <h2 class="section-title">Everything. All at once.</h2>
+    <p class="section-desc">Six pillars. Hundreds of commands. One bot that doesn't make you choose.</p>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">◈</div>
+      <h3>Artificial Intelligence</h3>
+      <p>Chat directly with an AI assistant inside Discord. Get answers, generate ideas, and automate conversations — no tab switching needed.</p>
+      <span class="feature-tag">AI · ChatGPT</span>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">▣</div>
+      <h3>Security & Setup</h3>
+      <p>Anti-nuke protection, automod rules, and full server configuration tools. Stop raids before they start and build your moderation stack precisely.</p>
+      <span class="feature-tag">Antinuke · Automod · Moderation</span>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">♫</div>
+      <h3>Music & Playlists</h3>
+      <p>Crystal-clear playback, queue management, audio filters, and saved playlists you can share across servers. The void sounds good.</p>
+      <span class="feature-tag">Music · Playlist · Filters</span>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">◉</div>
+      <h3>Identity & Profiles</h3>
+      <p>Custom profile cards, bio setup, profile picture packs, and image tools so every member has a distinct presence in your server.</p>
+      <span class="feature-tag">Profile · Pfp · Image</span>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">⬡</div>
+      <h3>Community Tools</h3>
+      <p>Run giveaways, automate roles, control voice channels, and keep your community engaged with fun games and utility commands.</p>
+      <span class="feature-tag">Giveaway · Fun · Role · Voice</span>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">⌘</div>
+      <h3>Automation Helpers</h3>
+      <p>Small automations that remove repetitive work: welcome messages, role assignment, utility shortcuts, and server info at a glance.</p>
+      <span class="feature-tag">Welcome · Utility · Info</span>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- COMMAND PREVIEW -->
+<div class="cmd-section" id="commands">
+  <div class="cmd-inner">
+    <div>
+      <p class="section-label">Built for Discord</p>
+      <h2 class="section-title">Commands that just work</h2>
+      <p class="section-desc">Browse every category in-Discord with the interactive help menu. No docs page needed — the bot explains itself.</p>
+
+      <div class="cat-strip">
+        <span class="cat-pill">AI</span>
+        <span class="cat-pill">Mus
